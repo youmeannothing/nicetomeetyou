@@ -10,7 +10,7 @@
   --ghost: #b3b9bf;
   --line: #e4e7ea;
   --fill: #f4f5f6;
-  --accent: #2F7A50;
+  --accent: #B0446B;
   --sans: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
   --mono: 'Nanum Gothic Coding', monospace;
 }
@@ -188,7 +188,7 @@ input:focus, textarea:focus {
 .toolbar .tb-hl {
   width: auto;
   padding: 0 7px;
-  background: #E7F2EA;
+  background: #FAEAF0;
   color: var(--accent);
 }
 .toolbar button svg { display: block; margin: 0 auto; }
@@ -264,7 +264,7 @@ input:focus, textarea:focus {
   border-color: var(--accent);
   color: #fff;
 }
-.btn-solid:hover { background: #25603F; border-color: #25603F; }
+.btn-solid:hover { background: #933657; border-color: #933657; }
 
 /* ——— 미리보기 ——— */
 
@@ -372,11 +372,11 @@ input:focus, textarea:focus {
   font-size: 8.5px;
   color: var(--accent);
   background: #fff;
-  border: 1px solid #D2E6D9;
+  border: 1px solid #F0D3DF;
   padding: 1px 6px;
   cursor: pointer;
 }
-.hash:hover { background: #E7F2EA; }
+.hash:hover { background: #FAEAF0; }
 
 /* ——— 태그 필터 바 ——— */
 
@@ -486,7 +486,7 @@ input:focus, textarea:focus {
   color: var(--body);
 }
 .v-body mark {
-  background: #E7F2EA;
+  background: #FAEAF0;
   color: inherit;
   padding: 0 2px;
 }
