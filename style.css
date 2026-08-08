@@ -515,6 +515,10 @@ input:focus, textarea:focus {
   overflow-wrap: anywhere;
 }
 .v-link:hover { border-color: var(--muted); }
+.v-link-host {
+  color: var(--faint);
+  font-size: 9.5px;
+}
 
 .v-actions {
   display: flex;
