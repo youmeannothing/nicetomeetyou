@@ -7,7 +7,7 @@
   <meta name="description" content="매일 자정 사라지는 하루짜리 지인 구인 게시판">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 
@@ -81,8 +81,11 @@
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-solid" id="submit-btn">게재</button>
-          <button type="button" class="btn" id="preview-btn">미리보기</button>
           <button type="button" class="btn" id="cancel-btn">접기</button>
+          <button type="button" id="preview-btn" class="preview-btn">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            미리보기
+          </button>
         </div>
         <div id="preview-area" class="preview-area" hidden>
           <div class="preview-head">
@@ -142,7 +145,7 @@
     </form>
   </dialog>
 
-  <script src="config.js?v=7"></script>
-  <script type="module" src="app.js?v=7"></script>
+  <script src="config.js?v=8"></script>
+  <script type="module" src="app.js?v=8"></script>
 </body>
 </html>

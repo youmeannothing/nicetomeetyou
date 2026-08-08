@@ -268,6 +268,24 @@ input:focus, textarea:focus {
 
 /* ——— 미리보기 ——— */
 
+.preview-btn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  font-family: var(--sans);
+  font-size: 10.5px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 6px 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.preview-btn:hover { color: var(--accent); }
+.preview-btn svg { flex-shrink: 0; }
+
 .preview-area {
   margin-top: 14px;
   border-top: 1px dashed var(--line);
