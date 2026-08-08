@@ -60,6 +60,15 @@ function parseTags(raw) {
   )].slice(0, 5);
 }
 
+// "@abc", "abc", "x.com/abc", "twitter.com/@abc" → "abc"
+function normalizeTwitter(t) {
+  t = t.trim();
+  if (!t) return "";
+  const m = t.match(/(?:x\.com|twitter\.com)\/@?([A-Za-z0-9_]{1,15})/i)
+    || t.match(/^@?([A-Za-z0-9_]{1,15})$/);
+  return m ? m[1] : "";
+}
+
 function normalizeUrl(u) {
   if (!u) return "";
   if (/^https?:\/\//i.test(u)) return u;
@@ -264,7 +273,7 @@ function renderPosts() {
 
     li.append(title, meta, preview);
 
-    if (p.tags?.length || p.link || p.contact) {
+    if (p.tags?.length || p.link || p.twitter) {
       const tags = document.createElement("div");
       tags.className = "card-tags";
       (p.tags || []).forEach(t => {
@@ -276,7 +285,7 @@ function renderPosts() {
         tags.appendChild(chip);
       });
       if (p.link) tags.append(Object.assign(document.createElement("span"), { textContent: "링크" }));
-      if (p.contact) tags.append(Object.assign(document.createElement("span"), { textContent: "연락" }));
+      if (p.twitter) tags.append(Object.assign(document.createElement("span"), { textContent: "𝕏" }));
       li.appendChild(tags);
     }
 
@@ -290,10 +299,13 @@ function renderPosts() {
 
 // ——— 전체 글 보기 모달 ———
 
-function viewPost(p) {
+function viewPost(p, { preview = false } = {}) {
   const dlg = $("view-dialog");
-  $("v-title").textContent = p.title;
-  $("v-meta").textContent = postMetaText(p);
+  $("v-title").textContent = p.title || "(제목 없음)";
+  $("v-meta").textContent = preview
+    ? `${p.name || "익명"} · 미리보기 — 아직 게재되지 않았습니다`
+    : postMetaText(p);
+  $("v-actions").hidden = preview;
   $("v-body").innerHTML = renderRich(p.body);
 
   const vTags = $("v-tags");
@@ -304,7 +316,7 @@ function viewPost(p) {
     chip.type = "button";
     chip.className = "hash";
     chip.textContent = "#" + t;
-    chip.onclick = () => { dlg.close(); setFilter(t); };
+    if (!preview) chip.onclick = () => { dlg.close(); setFilter(t); };
     vTags.appendChild(chip);
   });
 
@@ -317,18 +329,33 @@ function viewPost(p) {
   link.hidden = !url;
   if (url) { link.href = url; link.textContent = "🔗 " + url; }
 
-  const contact = $("v-contact");
-  contact.hidden = !p.contact;
-  if (p.contact) {
-    contact.innerHTML = "";
-    const label = document.createElement("b");
-    label.textContent = "연락";
-    contact.append(label, document.createTextNode(p.contact));
+  const tw = $("v-twitter");
+  const handle = normalizeTwitter(p.twitter || "");
+  tw.hidden = !handle;
+  if (handle) {
+    tw.href = "https://x.com/" + handle;
+    tw.textContent = "𝕏 @" + handle;
   }
 
-  $("v-edit").onclick = () => { dlg.close(); beginEdit(p); };
-  $("v-del").onclick = () => { dlg.close(); confirmDelete(p); };
+  if (!preview) {
+    $("v-edit").onclick = () => { dlg.close(); beginEdit(p); };
+    $("v-del").onclick = () => { dlg.close(); confirmDelete(p); };
+  }
   dlg.showModal();
+}
+
+// 폼의 현재 내용으로 미리보기
+function previewDraft() {
+  viewPost({
+    name: $("f-name").value.trim() || "익명",
+    title: $("f-title").value.trim(),
+    body: $("f-body").value,
+    link: $("f-link").value.trim(),
+    tags: parseTags($("f-tags").value),
+    twitter: $("f-twitter").value.trim(),
+    image: attachedImage,
+    createdAt: Date.now(),
+  }, { preview: true });
 }
 
 // ——— 글쓰기 폼 ———
@@ -370,7 +397,7 @@ async function handleSubmit(e) {
       body: $("f-body").value.trim(),
       link: $("f-link").value.trim(),
       tags: parseTags($("f-tags").value),
-      contact: $("f-contact").value.trim(),
+      twitter: normalizeTwitter($("f-twitter").value),
       image: attachedImage,
     };
     if (editingId) {
@@ -431,7 +458,7 @@ async function beginEdit(post) {
   $("f-link").value = post.link || "";
   $("link-row").hidden = !post.link;
   $("f-tags").value = (post.tags || []).map(t => "#" + t).join(" ");
-  $("f-contact").value = post.contact || "";
+  $("f-twitter").value = post.twitter ? "@" + post.twitter : "";
   $("f-password").required = false;
   $("f-password").placeholder = "변경할 때만 입력";
   attachedImage = post.image || null;
@@ -530,6 +557,7 @@ async function main() {
   };
 
   $("v-close").onclick = () => $("view-dialog").close();
+  $("preview-btn").onclick = previewDraft;
 
   startCountdown();
 }

@@ -7,7 +7,7 @@
   <meta name="description" content="매일 자정 사라지는 하루짜리 지인 구인 게시판">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -75,12 +75,13 @@
             <input type="text" id="f-tags" maxlength="80" placeholder="#러닝 #홍대 (스페이스로 구분)" autocomplete="off">
           </label>
           <label class="field">
-            <span class="label">연락 방법 <em>선택</em></span>
-            <input type="text" id="f-contact" maxlength="80" placeholder="예) 오픈채팅, 이메일, 인스타" autocomplete="off">
+            <span class="label">트위터 아이디 <em>선택</em></span>
+            <input type="text" id="f-twitter" maxlength="60" placeholder="@your_id" autocomplete="off">
           </label>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn btn-solid" id="submit-btn">게재</button>
+          <button type="button" class="btn" id="preview-btn">미리보기</button>
           <button type="button" class="btn" id="cancel-btn">접기</button>
         </div>
       </form>
@@ -115,8 +116,8 @@
     <div id="v-body" class="v-body"></div>
     <div id="v-tags" class="v-tags" hidden></div>
     <a id="v-link" class="v-link" target="_blank" rel="noopener noreferrer" hidden></a>
-    <div id="v-contact" class="post-contact" hidden></div>
-    <div class="v-actions">
+    <a id="v-twitter" class="v-link" target="_blank" rel="noopener noreferrer" hidden></a>
+    <div class="v-actions" id="v-actions">
       <button type="button" id="v-edit" class="btn">수정</button>
       <button type="button" id="v-del" class="btn">삭제</button>
     </div>
@@ -134,7 +135,7 @@
     </form>
   </dialog>
 
-  <script src="config.js?v=5"></script>
-  <script type="module" src="app.js?v=5"></script>
+  <script src="config.js?v=6"></script>
+  <script type="module" src="app.js?v=6"></script>
 </body>
 </html>
