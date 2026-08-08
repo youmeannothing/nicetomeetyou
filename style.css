@@ -266,6 +266,32 @@ input:focus, textarea:focus {
 }
 .btn-solid:hover { background: #2a4470; border-color: #2a4470; }
 
+/* ——— 미리보기 ——— */
+
+.preview-area {
+  margin-top: 14px;
+  border-top: 1px dashed var(--line);
+  padding-top: 10px;
+}
+.preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+.preview-head .label { margin-bottom: 0; }
+.preview-head button {
+  background: none;
+  border: none;
+  font-size: 9px;
+  color: var(--faint);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.preview-head button:hover { color: var(--ink); }
+
 /* ——— gallery ——— */
 
 .post-list {

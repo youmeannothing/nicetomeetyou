@@ -7,7 +7,7 @@
   <meta name="description" content="매일 자정 사라지는 하루짜리 지인 구인 게시판">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
 
@@ -84,6 +84,13 @@
           <button type="button" class="btn" id="preview-btn">미리보기</button>
           <button type="button" class="btn" id="cancel-btn">접기</button>
         </div>
+        <div id="preview-area" class="preview-area" hidden>
+          <div class="preview-head">
+            <span class="label">미리보기 — 목록에서 이렇게 보입니다. 카드를 누르면 상세보기</span>
+            <button type="button" id="preview-close">닫기</button>
+          </div>
+          <ol id="preview-list" class="post-list"></ol>
+        </div>
       </form>
     </section>
 
@@ -135,7 +142,7 @@
     </form>
   </dialog>
 
-  <script src="config.js?v=6"></script>
-  <script type="module" src="app.js?v=6"></script>
+  <script src="config.js?v=7"></script>
+  <script type="module" src="app.js?v=7"></script>
 </body>
 </html>

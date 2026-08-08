@@ -245,56 +245,59 @@ function renderPosts() {
     ? `#${activeTag} 태그의 글이 없습니다.`
     : "아직 글이 없습니다. 오늘의 첫 글을 남겨보세요.";
 
-  shown.forEach(p => {
-    const li = document.createElement("li");
-    li.className = "card";
-    li.tabIndex = 0;
-    li.setAttribute("role", "button");
+  shown.forEach(p => list.appendChild(makeCard(p)));
+}
 
-    if (p.image) {
-      const thumb = document.createElement("img");
-      thumb.className = "card-thumb";
-      thumb.src = p.image;
-      thumb.alt = "";
-      li.appendChild(thumb);
-    }
+// 게시글 카드 DOM — 목록과 미리보기가 같은 모양을 공유
+function makeCard(p, { preview = false } = {}) {
+  const li = document.createElement("li");
+  li.className = "card";
+  li.tabIndex = 0;
+  li.setAttribute("role", "button");
 
-    const title = document.createElement("div");
-    title.className = "card-title";
-    title.textContent = p.title;
+  if (p.image) {
+    const thumb = document.createElement("img");
+    thumb.className = "card-thumb";
+    thumb.src = p.image;
+    thumb.alt = "";
+    li.appendChild(thumb);
+  }
 
-    const meta = document.createElement("div");
-    meta.className = "card-meta";
-    meta.textContent = postMetaText(p);
+  const title = document.createElement("div");
+  title.className = "card-title";
+  title.textContent = p.title || "(제목 없음)";
 
-    const preview = document.createElement("p");
-    preview.className = "card-preview";
-    preview.textContent = stripMarks(p.body);
+  const meta = document.createElement("div");
+  meta.className = "card-meta";
+  meta.textContent = postMetaText(p);
 
-    li.append(title, meta, preview);
+  const body = document.createElement("p");
+  body.className = "card-preview";
+  body.textContent = stripMarks(p.body);
 
-    if (p.tags?.length || p.link || p.twitter) {
-      const tags = document.createElement("div");
-      tags.className = "card-tags";
-      (p.tags || []).forEach(t => {
-        const chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "hash";
-        chip.textContent = "#" + t;
-        chip.onclick = e => { e.stopPropagation(); setFilter(t); };
-        tags.appendChild(chip);
-      });
-      if (p.link) tags.append(Object.assign(document.createElement("span"), { textContent: "링크" }));
-      if (p.twitter) tags.append(Object.assign(document.createElement("span"), { textContent: "𝕏" }));
-      li.appendChild(tags);
-    }
+  li.append(title, meta, body);
 
-    const open = () => viewPost(p);
-    li.onclick = open;
-    li.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
+  if (p.tags?.length || p.link || p.twitter) {
+    const tags = document.createElement("div");
+    tags.className = "card-tags";
+    (p.tags || []).forEach(t => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "hash";
+      chip.textContent = "#" + t;
+      if (!preview) chip.onclick = e => { e.stopPropagation(); setFilter(t); };
+      tags.appendChild(chip);
+    });
+    if (p.link) tags.append(Object.assign(document.createElement("span"), { textContent: "링크" }));
+    if (p.twitter) tags.append(Object.assign(document.createElement("span"), { textContent: "𝕏" }));
+    li.appendChild(tags);
+  }
 
-    list.appendChild(li);
-  });
+  const open = () => viewPost(p, { preview });
+  li.onclick = open;
+  li.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
+
+  return li;
 }
 
 // ——— 전체 글 보기 모달 ———
@@ -344,9 +347,9 @@ function viewPost(p, { preview = false } = {}) {
   dlg.showModal();
 }
 
-// 폼의 현재 내용으로 미리보기
+// 폼의 현재 내용을 목록 카드 모양으로 미리보기 — 카드를 누르면 상세 모달
 function previewDraft() {
-  viewPost({
+  const draft = {
     name: $("f-name").value.trim() || "익명",
     title: $("f-title").value.trim(),
     body: $("f-body").value,
@@ -355,7 +358,16 @@ function previewDraft() {
     twitter: $("f-twitter").value.trim(),
     image: attachedImage,
     createdAt: Date.now(),
-  }, { preview: true });
+  };
+  const list = $("preview-list");
+  list.innerHTML = "";
+  list.appendChild(makeCard(draft, { preview: true }));
+  $("preview-area").hidden = false;
+}
+
+function closePreview() {
+  $("preview-area").hidden = true;
+  $("preview-list").innerHTML = "";
 }
 
 // ——— 글쓰기 폼 ———
@@ -380,6 +392,7 @@ function closeForm() {
   attachedImage = null;
   setImageNote(null);
   $("link-row").hidden = true;
+  closePreview();
   $("form-heading").textContent = "새 글 쓰기";
   $("submit-btn").textContent = "게재";
   $("f-password").required = true;
@@ -558,6 +571,7 @@ async function main() {
 
   $("v-close").onclick = () => $("view-dialog").close();
   $("preview-btn").onclick = previewDraft;
+  $("preview-close").onclick = closePreview;
 
   startCountdown();
 }
