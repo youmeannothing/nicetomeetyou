@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nice to Meet You — 하루짜리 지인 게시판</title>
+  <meta name="description" content="매일 자정 사라지는 하루짜리 지인 구인 게시판">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="masthead">
+    <p class="kicker">하루짜리 지인 게시판 · Daily Bulletin</p>
+    <h1 class="title">Nice to Meet You</h1>
+    <p class="tagline">오늘 하루만 존재하는 게시판. 매일 밤 12시, 모든 글이 사라집니다.</p>
+    <div class="dateline">
+      <span id="issue-no">제 —호</span>
+      <span class="rule-dot" aria-hidden="true">·</span>
+      <span id="date-str">—</span>
+      <span class="rule-dot" aria-hidden="true">·</span>
+      <span>초기화까지 <b id="countdown" class="num">--:--:--</b></span>
+    </div>
+  </header>
+
+  <main>
+    <section class="compose" aria-label="글쓰기">
+      <button type="button" id="compose-toggle" class="compose-toggle">
+        <span class="plus" aria-hidden="true">＋</span> 글 남기기
+      </button>
+
+      <form id="compose-form" class="compose-form" hidden>
+        <p class="form-heading" id="form-heading">새 글 쓰기</p>
+        <div class="field-row">
+          <label class="field">
+            <span class="label">이름 / 별명</span>
+            <input type="text" id="f-name" maxlength="20" placeholder="익명" autocomplete="off">
+          </label>
+          <label class="field">
+            <span class="label">비밀번호 <em>수정·삭제용</em></span>
+            <input type="password" id="f-password" maxlength="30" minlength="4" required placeholder="4자 이상" autocomplete="new-password">
+          </label>
+        </div>
+        <label class="field">
+          <span class="label">제목</span>
+          <input type="text" id="f-title" maxlength="60" required placeholder="예) 주말에 같이 전시 볼 사람">
+        </label>
+        <label class="field">
+          <span class="label">내용</span>
+          <textarea id="f-body" rows="5" maxlength="1000" required placeholder="어떤 사람을 찾는지, 어떻게 연락하면 되는지 적어주세요."></textarea>
+        </label>
+        <label class="field">
+          <span class="label">연락 방법 <em>선택</em></span>
+          <input type="text" id="f-contact" maxlength="80" placeholder="예) 오픈채팅 링크, 이메일, 인스타 아이디" autocomplete="off">
+        </label>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-solid" id="submit-btn">게재하기</button>
+          <button type="button" class="btn" id="cancel-btn">접기</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="board" aria-label="오늘의 게시글">
+      <div class="board-head">
+        <h2 class="board-title">오늘의 글</h2>
+        <span class="board-count"><b id="post-count" class="num">0</b>건</span>
+      </div>
+      <ol id="post-list" class="post-list"></ol>
+      <p id="empty-state" class="empty" hidden>
+        아직 글이 없습니다. 오늘의 첫 글을 남겨보세요.
+      </p>
+    </section>
+  </main>
+
+  <footer class="colophon">
+    <p>모든 글은 한국 시간 밤 12시에 자동으로 사라집니다.</p>
+    <p id="mode-badge" class="mode-badge" hidden>로컬 모드 — 글이 이 브라우저에만 저장됩니다.</p>
+  </footer>
+
+  <dialog id="pw-dialog" class="pw-dialog">
+    <form method="dialog" id="pw-form">
+      <p class="pw-heading" id="pw-heading">비밀번호 확인</p>
+      <input type="password" id="pw-input" maxlength="30" placeholder="게시글 비밀번호" autocomplete="off">
+      <p class="pw-error" id="pw-error" hidden>비밀번호가 일치하지 않습니다.</p>
+      <div class="form-actions">
+        <button value="confirm" class="btn btn-solid">확인</button>
+        <button value="cancel" class="btn" formnovalidate>취소</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="config.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
