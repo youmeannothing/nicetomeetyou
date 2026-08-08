@@ -192,7 +192,10 @@ function renderMasthead() {
 }
 
 function postMetaText(p) {
-  return `${p.name || "익명"} · ${fmtTime.format(new Date(p.createdAt))}`
+  const handle = normalizeTwitter(p.twitter || "");
+  return (p.name || "익명")
+    + (handle ? ` @${handle}` : "")
+    + ` · ${fmtTime.format(new Date(p.createdAt))}`
     + (p.editedAt ? " (수정됨)" : "");
 }
 
@@ -277,7 +280,7 @@ function makeCard(p, { preview = false } = {}) {
 
   li.append(title, meta, body);
 
-  if (p.tags?.length || p.link || p.twitter) {
+  if (p.tags?.length || p.link) {
     const tags = document.createElement("div");
     tags.className = "card-tags";
     (p.tags || []).forEach(t => {
@@ -289,7 +292,6 @@ function makeCard(p, { preview = false } = {}) {
       tags.appendChild(chip);
     });
     if (p.link) tags.append(Object.assign(document.createElement("span"), { textContent: "링크" }));
-    if (p.twitter) tags.append(Object.assign(document.createElement("span"), { textContent: "𝕏" }));
     li.appendChild(tags);
   }
 
@@ -305,10 +307,24 @@ function makeCard(p, { preview = false } = {}) {
 function viewPost(p, { preview = false } = {}) {
   const dlg = $("view-dialog");
   $("v-title").textContent = p.title || "(제목 없음)";
-  $("v-meta").textContent = preview
-    ? `${p.name || "익명"} · 미리보기 — 아직 게재되지 않았습니다`
-    : postMetaText(p);
   $("v-actions").hidden = preview;
+
+  // 닉네임 옆에 트위터 아이디 (상세에서는 클릭 가능한 링크)
+  const meta = $("v-meta");
+  meta.innerHTML = "";
+  meta.append(document.createTextNode(p.name || "익명"));
+  const handle = normalizeTwitter(p.twitter || "");
+  if (handle) {
+    const a = document.createElement("a");
+    a.href = "https://x.com/" + handle;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = "@" + handle;
+    meta.append(" ", a);
+  }
+  meta.append(document.createTextNode(
+    ` · ${fmtTime.format(new Date(p.createdAt))}` + (p.editedAt ? " (수정됨)" : "")
+  ));
   $("v-body").innerHTML = renderRich(p.body);
 
   const vTags = $("v-tags");
@@ -331,14 +347,6 @@ function viewPost(p, { preview = false } = {}) {
   const url = normalizeUrl(p.link);
   link.hidden = !url;
   if (url) { link.href = url; link.textContent = "🔗 " + url; }
-
-  const tw = $("v-twitter");
-  const handle = normalizeTwitter(p.twitter || "");
-  tw.hidden = !handle;
-  if (handle) {
-    tw.href = "https://x.com/" + handle;
-    tw.textContent = "𝕏 @" + handle;
-  }
 
   if (!preview) {
     $("v-edit").onclick = () => { dlg.close(); beginEdit(p); };

@@ -461,6 +461,11 @@ input:focus, textarea:focus {
   color: var(--faint);
   margin-top: 3px;
 }
+.v-meta a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 
 .v-close {
   background: none;
