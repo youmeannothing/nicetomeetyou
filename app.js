@@ -25,6 +25,65 @@ const fmtDate = new Intl.DateTimeFormat("ko-KR", {
   timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric", weekday: "long",
 });
 
+// ——— 본문 꾸미기 (**굵게** *기울임* __밑줄__ ~~취소선~~ ==형광==) ———
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c =>
+    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+
+function renderRich(text) {
+  let h = escapeHtml(text);
+  h = h
+    .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/__([^_\n]+)__/g, "<u>$1</u>")
+    .replace(/~~([^~\n]+)~~/g, "<s>$1</s>")
+    .replace(/==([^=\n]+)==/g, "<mark>$1</mark>")
+    .replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+  h = h.replace(/(https?:\/\/[^\s<]+)/g,
+    '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  return h.replace(/\n/g, "<br>");
+}
+
+// 카드 미리보기용 — 꾸밈 표시 제거한 순수 텍스트
+function stripMarks(s) {
+  return s.replace(/(\*\*|__|~~|==|\*)/g, "");
+}
+
+function normalizeUrl(u) {
+  if (!u) return "";
+  if (/^https?:\/\//i.test(u)) return u;
+  if (/^[\w-]+(\.[\w-]+)+/.test(u)) return "https://" + u;
+  return "";
+}
+
+// ——— 이미지 첨부: 리사이즈 + JPEG 압축 → data URL ———
+
+function compressImage(file, maxDim = 1000, quality = 0.82) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.round(img.width * scale);
+      canvas.height = Math.round(img.height * scale);
+      canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("이미지를 읽을 수 없습니다")); };
+    img.src = url;
+  });
+}
+
+async function pickImage(file) {
+  let data = await compressImage(file);
+  if (data.length > 700_000) data = await compressImage(file, 800, 0.6);
+  if (data.length > 700_000) throw new Error("이미지가 너무 큽니다. 더 작은 이미지를 선택해주세요.");
+  return data;
+}
+
 // ——— 저장소: 로컬 모드 ———
 
 function makeLocalStore() {
@@ -41,7 +100,6 @@ function makeLocalStore() {
     const posts = alive(load()).sort((a, b) => b.createdAt - a.createdAt);
     listeners.forEach(cb => cb(posts));
   };
-  // 다른 탭에서의 변경도 반영
   window.addEventListener("storage", e => { if (e.key === KEY) notify(); });
 
   return {
@@ -106,10 +164,16 @@ const $ = id => document.getElementById(id);
 
 let store;
 let posts = [];
-let editingId = null; // 수정 중인 글 id
+let editingId = null;   // 수정 중인 글 id
+let attachedImage = null; // 첨부 이미지 data URL
 
 function renderMasthead() {
   $("date-str").textContent = fmtDate.format(new Date());
+}
+
+function postMetaText(p) {
+  return `${p.name || "익명"} · ${fmtTime.format(new Date(p.createdAt))}`
+    + (p.editedAt ? " (수정됨)" : "");
 }
 
 function renderPosts() {
@@ -120,56 +184,86 @@ function renderPosts() {
 
   posts.forEach(p => {
     const li = document.createElement("li");
-    li.className = "post";
+    li.className = "card";
+    li.tabIndex = 0;
+    li.setAttribute("role", "button");
 
-    const meta = document.createElement("div");
-    meta.className = "post-meta";
-    const time = document.createElement("span");
-    time.textContent = fmtTime.format(new Date(p.createdAt))
-      + (p.editedAt ? " (수정됨)" : "");
-    meta.appendChild(time);
-
-    const head = document.createElement("div");
-    head.className = "post-head";
-    const title = document.createElement("h3");
-    title.className = "post-title";
-    title.textContent = p.title;
-    const byline = document.createElement("span");
-    byline.className = "post-byline";
-    byline.textContent = p.name || "익명";
-    head.append(title, byline);
-
-    const body = document.createElement("p");
-    body.className = "post-body";
-    body.textContent = p.body;
-
-    li.append(meta, head, body);
-
-    if (p.contact) {
-      const contact = document.createElement("div");
-      contact.className = "post-contact";
-      const label = document.createElement("b");
-      label.textContent = "연락";
-      contact.append(label, document.createTextNode(p.contact));
-      li.appendChild(contact);
+    if (p.image) {
+      const thumb = document.createElement("img");
+      thumb.className = "card-thumb";
+      thumb.src = p.image;
+      thumb.alt = "";
+      li.appendChild(thumb);
     }
 
-    const actions = document.createElement("div");
-    actions.className = "post-actions";
-    const editBtn = document.createElement("button");
-    editBtn.textContent = "수정";
-    editBtn.onclick = () => beginEdit(p);
-    const delBtn = document.createElement("button");
-    delBtn.textContent = "삭제";
-    delBtn.onclick = () => confirmDelete(p);
-    actions.append(editBtn, delBtn);
-    li.appendChild(actions);
+    const title = document.createElement("div");
+    title.className = "card-title";
+    title.textContent = p.title;
+
+    const meta = document.createElement("div");
+    meta.className = "card-meta";
+    meta.textContent = postMetaText(p);
+
+    const preview = document.createElement("p");
+    preview.className = "card-preview";
+    preview.textContent = stripMarks(p.body);
+
+    li.append(title, meta, preview);
+
+    if (p.link || p.contact) {
+      const tags = document.createElement("div");
+      tags.className = "card-tags";
+      if (p.link) tags.append(Object.assign(document.createElement("span"), { textContent: "링크" }));
+      if (p.contact) tags.append(Object.assign(document.createElement("span"), { textContent: "연락" }));
+      li.appendChild(tags);
+    }
+
+    const open = () => viewPost(p);
+    li.onclick = open;
+    li.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open(); } };
 
     list.appendChild(li);
   });
 }
 
+// ——— 전체 글 보기 모달 ———
+
+function viewPost(p) {
+  const dlg = $("view-dialog");
+  $("v-title").textContent = p.title;
+  $("v-meta").textContent = postMetaText(p);
+  $("v-body").innerHTML = renderRich(p.body);
+
+  const img = $("v-image");
+  img.hidden = !p.image;
+  if (p.image) img.src = p.image;
+
+  const link = $("v-link");
+  const url = normalizeUrl(p.link);
+  link.hidden = !url;
+  if (url) { link.href = url; link.textContent = "🔗 " + url; }
+
+  const contact = $("v-contact");
+  contact.hidden = !p.contact;
+  if (p.contact) {
+    contact.innerHTML = "";
+    const label = document.createElement("b");
+    label.textContent = "연락";
+    contact.append(label, document.createTextNode(p.contact));
+  }
+
+  $("v-edit").onclick = () => { dlg.close(); beginEdit(p); };
+  $("v-del").onclick = () => { dlg.close(); confirmDelete(p); };
+  dlg.showModal();
+}
+
 // ——— 글쓰기 폼 ———
+
+function setImageNote(name) {
+  $("image-note").hidden = !name;
+  $("image-btn").hidden = !!name;
+  $("image-name").textContent = name || "";
+}
 
 function openForm() {
   $("compose-form").hidden = false;
@@ -183,8 +277,10 @@ function closeForm() {
   form.hidden = true;
   $("compose-toggle").hidden = false;
   editingId = null;
+  attachedImage = null;
+  setImageNote(null);
   $("form-heading").textContent = "새 글 쓰기";
-  $("submit-btn").textContent = "게재하기";
+  $("submit-btn").textContent = "게재";
   $("f-password").required = true;
   $("f-password").placeholder = "4자 이상";
 }
@@ -198,7 +294,9 @@ async function handleSubmit(e) {
       name: $("f-name").value.trim() || "익명",
       title: $("f-title").value.trim(),
       body: $("f-body").value.trim(),
+      link: $("f-link").value.trim(),
       contact: $("f-contact").value.trim(),
+      image: attachedImage,
     };
     if (editingId) {
       data.editedAt = Date.now();
@@ -255,9 +353,12 @@ async function beginEdit(post) {
   $("f-name").value = post.name;
   $("f-title").value = post.title;
   $("f-body").value = post.body;
+  $("f-link").value = post.link || "";
   $("f-contact").value = post.contact || "";
   $("f-password").required = false;
   $("f-password").placeholder = "변경할 때만 입력";
+  attachedImage = post.image || null;
+  setImageNote(attachedImage ? "기존 이미지 유지" : null);
   $("compose-form").scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
@@ -273,7 +374,6 @@ function startCountdown() {
   const tick = () => {
     const remain = boundary + DAY - Date.now();
     if (remain <= 0) {
-      // 자정 도래 — 새 하루 시작
       boundary = todayBoundary();
       renderMasthead();
       store.refresh();
@@ -311,8 +411,41 @@ async function main() {
   $("compose-toggle").onclick = openForm;
   $("cancel-btn").onclick = closeForm;
   $("compose-form").onsubmit = handleSubmit;
-  // 다이얼로그의 확인 버튼은 빈 비밀번호로도 닫히도록 폼 검증 없음
   $("pw-form").onsubmit = () => {};
+
+  // 텍스트 꾸미기 툴바
+  $("toolbar").addEventListener("click", e => {
+    const btn = e.target.closest("button[data-mark]");
+    if (!btn) return;
+    const mark = btn.dataset.mark;
+    const ta = $("f-body");
+    const { selectionStart: s, selectionEnd: en, value: v } = ta;
+    const sel = v.slice(s, en) || "텍스트";
+    ta.value = v.slice(0, s) + mark + sel + mark + v.slice(en);
+    ta.focus();
+    ta.setSelectionRange(s + mark.length, s + mark.length + sel.length);
+  });
+
+  // 이미지 첨부
+  $("image-btn").onclick = () => $("f-image").click();
+  $("f-image").onchange = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+      attachedImage = await pickImage(file);
+      setImageNote(file.name);
+    } catch (err) {
+      alert(err.message);
+      e.target.value = "";
+    }
+  };
+  $("image-remove").onclick = () => {
+    attachedImage = null;
+    $("f-image").value = "";
+    setImageNote(null);
+  };
+
+  $("v-close").onclick = () => $("view-dialog").close();
 
   startCountdown();
 }
