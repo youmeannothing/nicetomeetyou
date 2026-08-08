@@ -348,7 +348,9 @@ function viewPost(p, { preview = false } = {}) {
 }
 
 // 폼의 현재 내용을 목록 카드 모양으로 미리보기 — 카드를 누르면 상세 모달
+// 미리보기 버튼을 다시 누르면 닫힌다 (토글)
 function previewDraft() {
+  if (!$("preview-area").hidden) { closePreview(); return; }
   const draft = {
     name: $("f-name").value.trim() || "익명",
     title: $("f-title").value.trim(),
@@ -571,7 +573,6 @@ async function main() {
 
   $("v-close").onclick = () => $("view-dialog").close();
   $("preview-btn").onclick = previewDraft;
-  $("preview-close").onclick = closePreview;
 
   startCountdown();
 }
