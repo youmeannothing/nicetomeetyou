@@ -5,30 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nice to Meet You — 하루짜리 지인 게시판</title>
   <meta name="description" content="매일 자정 사라지는 하루짜리 지인 구인 게시판">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <header class="masthead">
-    <p class="kicker">하루짜리 지인 게시판 · Daily Bulletin</p>
-    <h1 class="title">Nice to Meet You</h1>
-    <p class="tagline">오늘 하루만 존재하는 게시판. 매일 밤 12시, 모든 글이 사라집니다.</p>
-    <div class="dateline">
-      <span id="issue-no">제 —호</span>
-      <span class="rule-dot" aria-hidden="true">·</span>
-      <span id="date-str">—</span>
-      <span class="rule-dot" aria-hidden="true">·</span>
-      <span>초기화까지 <b id="countdown" class="num">--:--:--</b></span>
-    </div>
-  </header>
+  <div class="sheet">
+    <header>
+      <div class="t">지인 구함</div>
+      <div class="st">nice to meet you :: 오늘 하루만 존재하는 게시판</div>
+      <div class="meta">
+        <span id="date-str">—</span> &nbsp;·&nbsp; 초기화까지 <b id="countdown">--:--:--</b>
+      </div>
+    </header>
 
-  <main>
-    <section class="compose" aria-label="글쓰기">
+    <section class="grp" aria-label="글쓰기">
+      <div class="gh">글쓰기</div>
       <button type="button" id="compose-toggle" class="compose-toggle">
-        <span class="plus" aria-hidden="true">＋</span> 글 남기기
+        <span class="plus">＋</span>새 글을 남기려면 여기를 누르세요
       </button>
 
       <form id="compose-form" class="compose-form" hidden>
@@ -56,28 +51,27 @@
           <input type="text" id="f-contact" maxlength="80" placeholder="예) 오픈채팅 링크, 이메일, 인스타 아이디" autocomplete="off">
         </label>
         <div class="form-actions">
-          <button type="submit" class="btn btn-solid" id="submit-btn">게재하기</button>
+          <button type="submit" class="btn btn-solid" id="submit-btn">게재</button>
           <button type="button" class="btn" id="cancel-btn">접기</button>
         </div>
       </form>
     </section>
 
-    <section class="board" aria-label="오늘의 게시글">
-      <div class="board-head">
-        <h2 class="board-title">오늘의 글</h2>
-        <span class="board-count"><b id="post-count" class="num">0</b>건</span>
+    <section class="grp" aria-label="오늘의 게시글">
+      <div class="gh">오늘의 글
+        <span class="cnt"><b id="post-count">0</b>건</span>
       </div>
       <ol id="post-list" class="post-list"></ol>
       <p id="empty-state" class="empty" hidden>
         아직 글이 없습니다. 오늘의 첫 글을 남겨보세요.
       </p>
     </section>
-  </main>
 
-  <footer class="colophon">
-    <p>모든 글은 한국 시간 밤 12시에 자동으로 사라집니다.</p>
-    <p id="mode-badge" class="mode-badge" hidden>로컬 모드 — 글이 이 브라우저에만 저장됩니다.</p>
-  </footer>
+    <div class="corner">
+      매일 밤 12시(KST)에 모든 글이 사라집니다<br>
+      <span id="mode-badge" hidden>로컬 모드 — 글이 이 브라우저에만 저장됩니다</span>
+    </div>
+  </div>
 
   <dialog id="pw-dialog" class="pw-dialog">
     <form method="dialog" id="pw-form">

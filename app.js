@@ -6,17 +6,11 @@
 
 const KST_OFFSET = 9 * 3600 * 1000;
 const DAY = 24 * 3600 * 1000;
-// 창간일: 2026-08-08 (KST) → 제1호
-const LAUNCH_UTC = Date.UTC(2026, 7, 8) - KST_OFFSET;
 
 // 오늘 KST 자정의 UTC ms — 이 시각 이전 글은 만료
 function todayBoundary() {
   const kst = new Date(Date.now() + KST_OFFSET);
   return Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate()) - KST_OFFSET;
-}
-
-function issueNumber() {
-  return Math.floor((todayBoundary() - LAUNCH_UTC) / DAY) + 1;
 }
 
 async function sha256(text) {
@@ -115,7 +109,6 @@ let posts = [];
 let editingId = null; // 수정 중인 글 id
 
 function renderMasthead() {
-  $("issue-no").textContent = `제 ${issueNumber()}호`;
   $("date-str").textContent = fmtDate.format(new Date());
 }
 
@@ -125,32 +118,32 @@ function renderPosts() {
   $("post-count").textContent = posts.length;
   $("empty-state").hidden = posts.length > 0;
 
-  posts.forEach((p, i) => {
+  posts.forEach(p => {
     const li = document.createElement("li");
     li.className = "post";
 
-    const no = posts.length - i; // 오래된 글이 1번
     const meta = document.createElement("div");
     meta.className = "post-meta";
-    meta.innerHTML = `<span class="post-no">No. ${String(no).padStart(2, "0")}</span>`;
     const time = document.createElement("span");
     time.textContent = fmtTime.format(new Date(p.createdAt))
       + (p.editedAt ? " (수정됨)" : "");
     meta.appendChild(time);
 
+    const head = document.createElement("div");
+    head.className = "post-head";
     const title = document.createElement("h3");
     title.className = "post-title";
     title.textContent = p.title;
-
-    const byline = document.createElement("div");
+    const byline = document.createElement("span");
     byline.className = "post-byline";
     byline.textContent = p.name || "익명";
+    head.append(title, byline);
 
     const body = document.createElement("p");
     body.className = "post-body";
     body.textContent = p.body;
 
-    li.append(meta, title, byline, body);
+    li.append(meta, head, body);
 
     if (p.contact) {
       const contact = document.createElement("div");
