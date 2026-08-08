@@ -200,7 +200,15 @@ input:focus, textarea:focus {
   margin: 0 3px;
 }
 
-.link-row { margin-bottom: 4px; }
+.link-row {
+  display: grid;
+  grid-template-columns: 3fr 2fr;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+@media (max-width: 420px) {
+  .link-row { grid-template-columns: 1fr; }
+}
 
 .hint {
   font-size: 9px;

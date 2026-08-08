@@ -69,21 +69,6 @@ function normalizeTwitter(t) {
   return m ? m[1] : "";
 }
 
-// 링크의 페이지 제목 가져오기 — microlink 우선, 실패 시 allorigins로 <title> 파싱
-async function fetchLinkTitle(url) {
-  try {
-    const r = await fetch("https://api.microlink.io/?url=" + encodeURIComponent(url));
-    const j = await r.json();
-    if (j.status === "success" && j.data?.title) return j.data.title;
-  } catch { /* 다음 방법 시도 */ }
-  try {
-    const r = await fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(url));
-    const m = (await r.text()).match(/<title[^>]*>([^<]*)<\/title>/i);
-    if (m) return m[1].trim();
-  } catch { /* 제목 없이 표시 */ }
-  return "";
-}
-
 function hostnameOf(url) {
   try { return new URL(url).hostname.replace(/^www\./, ""); }
   catch { return ""; }
@@ -206,28 +191,6 @@ let posts = [];
 let editingId = null;    // 수정 중인 글 id
 let attachedImage = null; // 첨부 이미지 data URL
 let activeTag = null;    // 태그 필터
-let linkMeta = { url: "", title: "" }; // 첨부 링크의 페이지 제목 캐시
-
-// 링크 입력이 멈추면 페이지 제목을 가져온다
-let linkTitleTimer = null;
-function scheduleLinkTitle() {
-  clearTimeout(linkTitleTimer);
-  linkTitleTimer = setTimeout(async () => {
-    const url = normalizeUrl($("f-link").value.trim());
-    if (!url) { linkMeta = { url: "", title: "" }; return; }
-    if (linkMeta.url === url && linkMeta.title) return;
-    linkMeta = { url, title: "" };
-    const title = await fetchLinkTitle(url);
-    if (linkMeta.url === url) { // 그 사이 링크가 안 바뀌었을 때만 반영
-      linkMeta.title = title;
-      updatePreview();
-    }
-  }, 600);
-}
-
-function currentLinkTitle() {
-  return linkMeta.url === normalizeUrl($("f-link").value.trim()) ? linkMeta.title : "";
-}
 
 function renderMasthead() {
   $("date-str").textContent = fmtDate.format(new Date());
@@ -414,7 +377,7 @@ function renderPreview() {
     title: $("f-title").value.trim(),
     body: $("f-body").value,
     link: $("f-link").value.trim(),
-    linkTitle: currentLinkTitle(),
+    linkTitle: $("f-link-label").value.trim(),
     tags: parseTags($("f-tags").value),
     twitter: $("f-twitter").value.trim(),
     image: attachedImage,
@@ -463,7 +426,6 @@ function closeForm() {
   attachedImage = null;
   setImageNote(null);
   $("link-row").hidden = true;
-  linkMeta = { url: "", title: "" };
   closePreview();
   $("form-heading").textContent = "새 글 쓰기";
   $("submit-btn").textContent = "게재";
@@ -481,7 +443,7 @@ async function handleSubmit(e) {
       title: $("f-title").value.trim(),
       body: $("f-body").value.trim(),
       link: $("f-link").value.trim(),
-      linkTitle: currentLinkTitle(),
+      linkTitle: $("f-link-label").value.trim(),
       tags: parseTags($("f-tags").value),
       twitter: normalizeTwitter($("f-twitter").value),
       image: attachedImage,
@@ -542,8 +504,8 @@ async function beginEdit(post) {
   $("f-title").value = post.title;
   $("f-body").value = post.body;
   $("f-link").value = post.link || "";
+  $("f-link-label").value = post.linkTitle || "";
   $("link-row").hidden = !post.link;
-  linkMeta = { url: normalizeUrl(post.link || ""), title: post.linkTitle || "" };
   $("f-tags").value = (post.tags || []).map(t => "#" + t).join(" ");
   $("f-twitter").value = post.twitter ? "@" + post.twitter : "";
   $("f-password").required = false;
@@ -649,7 +611,6 @@ async function main() {
   $("preview-btn").onclick = previewDraft;
   // 미리보기가 열려 있으면 입력을 따라 실시간 갱신
   $("compose-form").addEventListener("input", updatePreview);
-  $("f-link").addEventListener("input", scheduleLinkTitle);
 
   startCountdown();
 }
