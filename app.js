@@ -347,10 +347,8 @@ function viewPost(p, { preview = false } = {}) {
   dlg.showModal();
 }
 
-// 폼의 현재 내용을 목록 카드 모양으로 미리보기 — 카드를 누르면 상세 모달
-// 미리보기 버튼을 다시 누르면 닫힌다 (토글)
-function previewDraft() {
-  if (!$("preview-area").hidden) { closePreview(); return; }
+// 폼의 현재 내용을 목록 카드 모양으로 렌더링
+function renderPreview() {
   const draft = {
     name: $("f-name").value.trim() || "익명",
     title: $("f-title").value.trim(),
@@ -364,7 +362,17 @@ function previewDraft() {
   const list = $("preview-list");
   list.innerHTML = "";
   list.appendChild(makeCard(draft, { preview: true }));
+}
+
+// 열려 있는 동안 입력을 따라 실시간 갱신, 버튼은 열기/닫기 토글
+function previewDraft() {
+  if (!$("preview-area").hidden) { closePreview(); return; }
+  renderPreview();
   $("preview-area").hidden = false;
+}
+
+function updatePreview() {
+  if (!$("preview-area").hidden) renderPreview();
 }
 
 function closePreview() {
@@ -560,6 +568,7 @@ async function main() {
     try {
       attachedImage = await pickImage(file);
       setImageNote(file.name);
+      updatePreview();
     } catch (err) {
       alert(err.message);
       e.target.value = "";
@@ -569,10 +578,13 @@ async function main() {
     attachedImage = null;
     $("f-image").value = "";
     setImageNote(null);
+    updatePreview();
   };
 
   $("v-close").onclick = () => $("view-dialog").close();
   $("preview-btn").onclick = previewDraft;
+  // 미리보기가 열려 있으면 입력을 따라 실시간 갱신
+  $("compose-form").addEventListener("input", updatePreview);
 
   startCountdown();
 }
