@@ -7,7 +7,7 @@
   <meta name="description" content="매일 자정 사라지는 하루짜리 지인 구인 게시판">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -45,34 +45,40 @@
         <div class="field">
           <span class="label">내용</span>
           <div class="toolbar" id="toolbar">
-            <button type="button" data-mark="**"><b>B</b></button>
-            <button type="button" data-mark="*"><i>I</i></button>
-            <button type="button" data-mark="__"><u>U</u></button>
-            <button type="button" data-mark="~~"><s>S</s></button>
-            <button type="button" data-mark="==" class="tb-hl">형광</button>
+            <button type="button" data-mark="**" title="굵게"><b>B</b></button>
+            <button type="button" data-mark="*" title="기울임"><i>I</i></button>
+            <button type="button" data-mark="__" title="밑줄"><u>U</u></button>
+            <button type="button" data-mark="~~" title="취소선"><s>S</s></button>
+            <button type="button" data-mark="==" class="tb-hl" title="형광펜">형광</button>
+            <span class="tb-sep" aria-hidden="true"></span>
+            <button type="button" id="link-btn" title="링크 첨부">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>
+            </button>
+            <button type="button" id="image-btn" title="이미지 첨부">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/></svg>
+            </button>
+            <input type="file" id="f-image" accept="image/*" hidden>
+          </div>
+          <div class="link-row" id="link-row" hidden>
+            <input type="text" id="f-link" maxlength="200" placeholder="https://... 또는 instagram.com/..." autocomplete="off">
           </div>
           <textarea id="f-body" rows="5" maxlength="1000" required placeholder="어떤 사람을 찾는지, 어떻게 연락하면 되는지 적어주세요."></textarea>
+          <span class="image-note" id="image-note" hidden>
+            <span id="image-name"></span>
+            <button type="button" id="image-remove">제거</button>
+          </span>
           <p class="hint">드래그로 선택한 뒤 버튼을 누르면 **굵게** 같은 표시가 붙고, 게시되면 꾸민 모양으로 보입니다</p>
         </div>
         <div class="field-row">
           <label class="field">
-            <span class="label">링크 첨부 <em>선택</em></span>
-            <input type="text" id="f-link" maxlength="200" placeholder="예) https://... 또는 instagram.com/..." autocomplete="off">
+            <span class="label">태그 <em>선택 · 최대 5개</em></span>
+            <input type="text" id="f-tags" maxlength="80" placeholder="#러닝 #홍대 (스페이스로 구분)" autocomplete="off">
           </label>
-          <div class="field">
-            <span class="label">이미지 첨부 <em>선택</em></span>
-            <input type="file" id="f-image" accept="image/*" hidden>
-            <button type="button" id="image-btn" class="image-btn">이미지 선택…</button>
-            <span class="image-note" id="image-note" hidden>
-              <span id="image-name"></span>
-              <button type="button" id="image-remove">제거</button>
-            </span>
-          </div>
+          <label class="field">
+            <span class="label">연락 방법 <em>선택</em></span>
+            <input type="text" id="f-contact" maxlength="80" placeholder="예) 오픈채팅, 이메일, 인스타" autocomplete="off">
+          </label>
         </div>
-        <label class="field">
-          <span class="label">연락 방법 <em>선택</em></span>
-          <input type="text" id="f-contact" maxlength="80" placeholder="예) 오픈채팅 링크, 이메일, 인스타 아이디" autocomplete="off">
-        </label>
         <div class="form-actions">
           <button type="submit" class="btn btn-solid" id="submit-btn">게재</button>
           <button type="button" class="btn" id="cancel-btn">접기</button>
@@ -84,6 +90,7 @@
       <div class="gh">오늘의 글
         <span class="cnt"><b id="post-count">0</b>건</span>
       </div>
+      <div id="tag-bar" class="tag-bar" hidden></div>
       <ol id="post-list" class="post-list"></ol>
       <p id="empty-state" class="empty" hidden>
         아직 글이 없습니다. 오늘의 첫 글을 남겨보세요.
@@ -106,6 +113,7 @@
     </div>
     <img id="v-image" class="v-image" alt="" hidden>
     <div id="v-body" class="v-body"></div>
+    <div id="v-tags" class="v-tags" hidden></div>
     <a id="v-link" class="v-link" target="_blank" rel="noopener noreferrer" hidden></a>
     <div id="v-contact" class="post-contact" hidden></div>
     <div class="v-actions">
@@ -126,7 +134,7 @@
     </form>
   </dialog>
 
-  <script src="config.js?v=3"></script>
-  <script type="module" src="app.js?v=3"></script>
+  <script src="config.js?v=4"></script>
+  <script type="module" src="app.js?v=4"></script>
 </body>
 </html>

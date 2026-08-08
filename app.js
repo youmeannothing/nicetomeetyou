@@ -50,6 +50,16 @@ function stripMarks(s) {
   return s.replace(/(\*\*|__|~~|==|\*)/g, "");
 }
 
+// "#러닝 #홍대" → ["러닝","홍대"] (최대 5개, 중복 제거)
+function parseTags(raw) {
+  return [...new Set(
+    raw.split(/[\s,]+/)
+      .map(t => t.replace(/^#+/, "").trim())
+      .filter(Boolean)
+      .map(t => t.slice(0, 15))
+  )].slice(0, 5);
+}
+
 function normalizeUrl(u) {
   if (!u) return "";
   if (/^https?:\/\//i.test(u)) return u;
@@ -164,8 +174,9 @@ const $ = id => document.getElementById(id);
 
 let store;
 let posts = [];
-let editingId = null;   // 수정 중인 글 id
+let editingId = null;    // 수정 중인 글 id
 let attachedImage = null; // 첨부 이미지 data URL
+let activeTag = null;    // 태그 필터
 
 function renderMasthead() {
   $("date-str").textContent = fmtDate.format(new Date());
@@ -176,13 +187,56 @@ function postMetaText(p) {
     + (p.editedAt ? " (수정됨)" : "");
 }
 
+function setFilter(tag) {
+  activeTag = activeTag === tag ? null : tag;
+  renderPosts();
+}
+
+function renderTagBar() {
+  const bar = $("tag-bar");
+  const counts = new Map();
+  posts.forEach(p => (p.tags || []).forEach(t =>
+    counts.set(t, (counts.get(t) || 0) + 1)));
+
+  if (activeTag && !counts.has(activeTag)) activeTag = null;
+  bar.hidden = counts.size === 0;
+  bar.innerHTML = "";
+  if (counts.size === 0) return;
+
+  const all = document.createElement("button");
+  all.type = "button";
+  all.className = "chip" + (activeTag === null ? " on" : "");
+  all.textContent = "전체";
+  all.onclick = () => { activeTag = null; renderPosts(); };
+  bar.appendChild(all);
+
+  [...counts.keys()].sort((a, b) => counts.get(b) - counts.get(a)).forEach(t => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "chip" + (activeTag === t ? " on" : "");
+    chip.textContent = "#" + t;
+    chip.onclick = () => setFilter(t);
+    bar.appendChild(chip);
+  });
+}
+
 function renderPosts() {
   const list = $("post-list");
   list.innerHTML = "";
-  $("post-count").textContent = posts.length;
-  $("empty-state").hidden = posts.length > 0;
+  renderTagBar();
 
-  posts.forEach(p => {
+  const shown = activeTag
+    ? posts.filter(p => (p.tags || []).includes(activeTag))
+    : posts;
+
+  $("post-count").textContent = shown.length;
+  const empty = $("empty-state");
+  empty.hidden = shown.length > 0;
+  empty.textContent = activeTag
+    ? `#${activeTag} 태그의 글이 없습니다.`
+    : "아직 글이 없습니다. 오늘의 첫 글을 남겨보세요.";
+
+  shown.forEach(p => {
     const li = document.createElement("li");
     li.className = "card";
     li.tabIndex = 0;
@@ -210,9 +264,17 @@ function renderPosts() {
 
     li.append(title, meta, preview);
 
-    if (p.link || p.contact) {
+    if (p.tags?.length || p.link || p.contact) {
       const tags = document.createElement("div");
       tags.className = "card-tags";
+      (p.tags || []).forEach(t => {
+        const chip = document.createElement("button");
+        chip.type = "button";
+        chip.className = "hash";
+        chip.textContent = "#" + t;
+        chip.onclick = e => { e.stopPropagation(); setFilter(t); };
+        tags.appendChild(chip);
+      });
       if (p.link) tags.append(Object.assign(document.createElement("span"), { textContent: "링크" }));
       if (p.contact) tags.append(Object.assign(document.createElement("span"), { textContent: "연락" }));
       li.appendChild(tags);
@@ -233,6 +295,18 @@ function viewPost(p) {
   $("v-title").textContent = p.title;
   $("v-meta").textContent = postMetaText(p);
   $("v-body").innerHTML = renderRich(p.body);
+
+  const vTags = $("v-tags");
+  vTags.hidden = !p.tags?.length;
+  vTags.innerHTML = "";
+  (p.tags || []).forEach(t => {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "hash";
+    chip.textContent = "#" + t;
+    chip.onclick = () => { dlg.close(); setFilter(t); };
+    vTags.appendChild(chip);
+  });
 
   const img = $("v-image");
   img.hidden = !p.image;
@@ -261,8 +335,7 @@ function viewPost(p) {
 
 function setImageNote(name) {
   $("image-note").hidden = !name;
-  $("image-btn").hidden = !!name;
-  $("image-name").textContent = name || "";
+  $("image-name").textContent = name ? "🖼 " + name : "";
 }
 
 function openForm() {
@@ -279,6 +352,7 @@ function closeForm() {
   editingId = null;
   attachedImage = null;
   setImageNote(null);
+  $("link-row").hidden = true;
   $("form-heading").textContent = "새 글 쓰기";
   $("submit-btn").textContent = "게재";
   $("f-password").required = true;
@@ -295,6 +369,7 @@ async function handleSubmit(e) {
       title: $("f-title").value.trim(),
       body: $("f-body").value.trim(),
       link: $("f-link").value.trim(),
+      tags: parseTags($("f-tags").value),
       contact: $("f-contact").value.trim(),
       image: attachedImage,
     };
@@ -354,6 +429,8 @@ async function beginEdit(post) {
   $("f-title").value = post.title;
   $("f-body").value = post.body;
   $("f-link").value = post.link || "";
+  $("link-row").hidden = !post.link;
+  $("f-tags").value = (post.tags || []).map(t => "#" + t).join(" ");
   $("f-contact").value = post.contact || "";
   $("f-password").required = false;
   $("f-password").placeholder = "변경할 때만 입력";
@@ -425,6 +502,13 @@ async function main() {
     ta.focus();
     ta.setSelectionRange(s + mark.length, s + mark.length + sel.length);
   });
+
+  // 링크 첨부 (툴바 아이콘 → 입력줄 토글)
+  $("link-btn").onclick = () => {
+    const row = $("link-row");
+    row.hidden = !row.hidden;
+    if (!row.hidden) $("f-link").focus();
+  };
 
   // 이미지 첨부
   $("image-btn").onclick = () => $("f-image").click();
