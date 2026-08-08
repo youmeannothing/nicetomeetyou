@@ -10,7 +10,7 @@
   --ghost: #b3b9bf;
   --line: #e4e7ea;
   --fill: #f4f5f6;
-  --accent: #8A3440;
+  --accent: #34558A;
   --sans: 'Pretendard Variable', Pretendard, -apple-system, sans-serif;
   --mono: 'Nanum Gothic Coding', monospace;
 }
@@ -188,7 +188,7 @@ input:focus, textarea:focus {
 .toolbar .tb-hl {
   width: auto;
   padding: 0 7px;
-  background: #f6e7ea;
+  background: #e8eef7;
   color: var(--accent);
 }
 .toolbar button svg { display: block; margin: 0 auto; }
@@ -264,7 +264,7 @@ input:focus, textarea:focus {
   border-color: var(--accent);
   color: #fff;
 }
-.btn-solid:hover { background: #6f2a34; border-color: #6f2a34; }
+.btn-solid:hover { background: #2a4470; border-color: #2a4470; }
 
 /* ——— gallery ——— */
 
@@ -345,11 +345,11 @@ input:focus, textarea:focus {
   font-size: 8.5px;
   color: var(--accent);
   background: #fff;
-  border: 1px solid #eBd5d9;
+  border: 1px solid #d3deee;
   padding: 1px 6px;
   cursor: pointer;
 }
-.hash:hover { background: #f6e7ea; }
+.hash:hover { background: #e8eef7; }
 
 /* ——— 태그 필터 바 ——— */
 
@@ -459,7 +459,7 @@ input:focus, textarea:focus {
   color: var(--body);
 }
 .v-body mark {
-  background: #f6e7ea;
+  background: #e8eef7;
   color: inherit;
   padding: 0 2px;
 }
