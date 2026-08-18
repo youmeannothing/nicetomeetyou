@@ -1,17 +1,8 @@
 // ————————————————————————————————————————————
-// Nice to Meet You — 하루짜리 지인 게시판
-// 매일 한국시간 자정에 게시글이 사라진다.
+// Nice to Meet You — 지인 게시판
+// 글은 작성자가 삭제할 때까지 남는다.
 // Firebase 설정이 있으면 공유 모드, 없으면 로컬 모드.
 // ————————————————————————————————————————————
-
-const KST_OFFSET = 9 * 3600 * 1000;
-const DAY = 24 * 3600 * 1000;
-
-// 오늘 KST 자정의 UTC ms — 이 시각 이전 글은 만료
-function todayBoundary() {
-  const kst = new Date(Date.now() + KST_OFFSET);
-  return Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), kst.getUTCDate()) - KST_OFFSET;
-}
 
 async function sha256(text) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -19,7 +10,8 @@ async function sha256(text) {
 }
 
 const fmtTime = new Intl.DateTimeFormat("ko-KR", {
-  timeZone: "Asia/Seoul", hour: "2-digit", minute: "2-digit", hour12: false,
+  timeZone: "Asia/Seoul", month: "long", day: "numeric",
+  hour: "2-digit", minute: "2-digit", hour12: false,
 });
 const fmtDate = new Intl.DateTimeFormat("ko-KR", {
   timeZone: "Asia/Seoul", year: "numeric", month: "long", day: "numeric", weekday: "long",
@@ -117,11 +109,10 @@ function makeLocalStore() {
     catch { return []; }
   };
   const save = posts => localStorage.setItem(KEY, JSON.stringify(posts));
-  const alive = posts => posts.filter(p => p.createdAt >= todayBoundary());
 
   let listeners = [];
   const notify = () => {
-    const posts = alive(load()).sort((a, b) => b.createdAt - a.createdAt);
+    const posts = load().sort((a, b) => b.createdAt - a.createdAt);
     listeners.forEach(cb => cb(posts));
   };
   window.addEventListener("storage", e => { if (e.key === KEY) notify(); });
@@ -130,19 +121,18 @@ function makeLocalStore() {
     mode: "local",
     subscribe(cb) { listeners.push(cb); notify(); },
     async add(post) {
-      const posts = alive(load());
+      const posts = load();
       posts.push({ ...post, id: crypto.randomUUID() });
       save(posts); notify();
     },
     async update(id, data) {
-      const posts = alive(load()).map(p => p.id === id ? { ...p, ...data } : p);
+      const posts = load().map(p => p.id === id ? { ...p, ...data } : p);
       save(posts); notify();
     },
     async remove(id) {
-      save(alive(load()).filter(p => p.id !== id));
+      save(load().filter(p => p.id !== id));
       notify();
     },
-    refresh: notify,
   };
 }
 
@@ -156,21 +146,12 @@ async function makeFirebaseStore(cfg) {
 
   let listeners = [];
   let current = [];
-  let unsub = null;
 
-  const listen = () => {
-    if (unsub) unsub();
-    const q = fs.query(
-      col,
-      fs.where("createdAt", ">=", todayBoundary()),
-      fs.orderBy("createdAt", "desc"),
-    );
-    unsub = fs.onSnapshot(q, snap => {
-      current = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      listeners.forEach(cb => cb(current));
-    });
-  };
-  listen();
+  const q = fs.query(col, fs.orderBy("createdAt", "desc"));
+  fs.onSnapshot(q, snap => {
+    current = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    listeners.forEach(cb => cb(current));
+  });
 
   return {
     mode: "firebase",
@@ -178,7 +159,6 @@ async function makeFirebaseStore(cfg) {
     async add(post) { await fs.addDoc(col, post); },
     async update(id, data) { await fs.updateDoc(fs.doc(db, "posts", id), data); },
     async remove(id) { await fs.deleteDoc(fs.doc(db, "posts", id)); },
-    refresh: listen, // 자정이 지나면 쿼리 경계를 갱신
   };
 }
 
@@ -251,7 +231,7 @@ function renderPosts() {
   empty.hidden = shown.length > 0;
   empty.textContent = activeTag
     ? `#${activeTag} 태그의 글이 없습니다.`
-    : "아직 글이 없습니다. 오늘의 첫 글을 남겨보세요.";
+    : "아직 글이 없습니다. 첫 글을 남겨보세요.";
 
   shown.forEach(p => list.appendChild(makeCard(p)));
 }
@@ -520,28 +500,6 @@ async function confirmDelete(post) {
   await store.remove(post.id);
 }
 
-// ——— 자정 카운트다운 & 초기화 ———
-
-function startCountdown() {
-  let boundary = todayBoundary();
-  const tick = () => {
-    const remain = boundary + DAY - Date.now();
-    if (remain <= 0) {
-      boundary = todayBoundary();
-      renderMasthead();
-      store.refresh();
-      return;
-    }
-    const h = Math.floor(remain / 3600000);
-    const m = Math.floor(remain % 3600000 / 60000);
-    const s = Math.floor(remain % 60000 / 1000);
-    $("countdown").textContent =
-      `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  };
-  tick();
-  setInterval(tick, 1000);
-}
-
 // ——— 시작 ———
 
 async function main() {
@@ -612,7 +570,6 @@ async function main() {
   // 미리보기가 열려 있으면 입력을 따라 실시간 갱신
   $("compose-form").addEventListener("input", updatePreview);
 
-  startCountdown();
 }
 
 main();

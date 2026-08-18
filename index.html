@@ -3,20 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nice to Meet You — 하루짜리 지인 게시판</title>
-  <meta name="description" content="매일 자정 사라지는 하루짜리 지인 구인 게시판">
+  <title>Nice to Meet You — 지인 게시판</title>
+  <meta name="description" content="지인을 구하는 게시판">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=19">
+  <link rel="stylesheet" href="style.css?v=20">
 </head>
 <body>
 
   <div class="sheet">
     <header>
       <div class="t">지인 구함</div>
-      <div class="st">nice to meet you :: 오늘 하루만 존재하는 게시판</div>
+      <div class="st">nice to meet you :: 지인을 구하는 게시판</div>
       <div class="meta">
-        <span id="date-str">—</span> &nbsp;·&nbsp; 초기화까지 <b id="countdown">--:--:--</b>
+        <span id="date-str">—</span>
       </div>
     </header>
 
@@ -96,18 +96,18 @@
     </section>
 
     <section class="grp" aria-label="오늘의 게시글">
-      <div class="gh">오늘의 글
+      <div class="gh">게시글
         <span class="cnt"><b id="post-count">0</b>건</span>
       </div>
       <div id="tag-bar" class="tag-bar" hidden></div>
       <ol id="post-list" class="post-list"></ol>
       <p id="empty-state" class="empty" hidden>
-        아직 글이 없습니다. 오늘의 첫 글을 남겨보세요.
+        아직 글이 없습니다. 첫 글을 남겨보세요.
       </p>
     </section>
 
     <div class="corner">
-      매일 밤 12시(KST)에 모든 글이 사라집니다<br>
+      글은 작성자가 삭제할 때까지 남아 있습니다<br>
       <span id="mode-badge" hidden>로컬 모드 — 글이 이 브라우저에만 저장됩니다</span>
     </div>
   </div>
@@ -142,7 +142,7 @@
     </form>
   </dialog>
 
-  <script src="config.js?v=19"></script>
-  <script type="module" src="app.js?v=19"></script>
+  <script src="config.js?v=20"></script>
+  <script type="module" src="app.js?v=20"></script>
 </body>
 </html>
